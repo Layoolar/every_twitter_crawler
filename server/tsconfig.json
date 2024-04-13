@@ -1,33 +1,16 @@
 {
 	"compilerOptions": {
-		"module": "CommonJS",
 		"target": "ES6",
-		"sourceMap": true,
+		"module": "CommonJS",
 		"outDir": "./dist/",
-		"lib": ["es2017", "es7", "es6", "DOM"],
-		"baseUrl": ".",
-		"resolveJsonModule": true,
-		"moduleResolution": "node",
+		"lib": ["es2017", "es6", "DOM"],
+		"baseUrl": "./src/*",
 		"esModuleInterop": true,
-		"noImplicitAny": true,
-		"noImplicitThis": true,
-		"declaration": false,
-		"allowJs": true,
+		"resolveJsonModule": true,
 		"strict": true,
-		"strictNullChecks": true,
-		"strictFunctionTypes": true,
-		"forceConsistentCasingInFileNames": true,
-		"paths": {
-			"@src/*": ["./database/*"],
-			"@tests/*": ["./tests/*"],
-			"@types/*": ["./types/*"],
-		},
-		"typeRoots": ["./types", "node_modules/@types"],
-		"plugins": [
-			{ "transform": "typescript-transform-paths" },
-			{ "transform": "typescript-transform-paths", "afterDeclarations": true }
-		]
+		"noImplicitAny": true,
+		"forceConsistentCasingInFileNames": true
 	},
-	"include": ["src/**/*.ts", "tests/**/*.ts", "types/**/*.ts"],
-	"exclude": ["node_modules/*", "dist/*"]
+	"include": ["src/**/**/**/*"],
+	"exclude": ["node_modules/*", "dist/*", "scripts/*"]
 }

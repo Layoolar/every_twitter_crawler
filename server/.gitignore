@@ -9,6 +9,9 @@ dist/
 
 # Environment variables
 .env
+.env*
+
+scripts/env*
 
 # Editor directories and files
 .idea/

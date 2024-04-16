@@ -27,13 +27,8 @@ export class UserUseCase {
         if (!id) {
             throw new ApplicationError('user id not provided', this.httpStatusCodes.StatusCodes.BAD_REQUEST);
         }
-        const output = await this.userDBImpl.findById(id);
-        if (output.$metadata.httpStatusCode === 200 && output.Item) {
-            for (const key in output.Item) {
-                output.Item[key] = Object.values(output.Item[key])[0];
-            }
-            return output.Item;
-        }
+        const output = await this.userDBImpl.getById(id);
+        if (output) return output;
         throw new ApplicationError('user data not found', this.httpStatusCodes.StatusCodes.NOT_FOUND);
     }
 }

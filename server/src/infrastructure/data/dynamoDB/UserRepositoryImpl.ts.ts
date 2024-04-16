@@ -4,22 +4,17 @@ import {
     DynamoDB,
     GetItemCommand,
     KeySchemaElement,
-    ListTablesCommand,
     PutItemCommand,
     ScalarAttributeType
 } from '@aws-sdk/client-dynamodb';
+import { UpdateCommandOutput } from '@aws-sdk/lib-dynamodb';
 import { User } from '../../../domain/entities';
 import { UserRepository } from '../../../domain/repositories';
-import { UpdateCommandOutput } from '@aws-sdk/lib-dynamodb';
+import { Base } from './Base';
 
-export class UserRepositoryImpl implements UserRepository {
-    private tableName = 'User';
-
-    constructor(private readonly dbClient: DynamoDB) {
-        this.createTable();
-    }
-
-    async createTable() {
+export class UserRepositoryImpl extends Base implements UserRepository {
+    constructor(dbClient: DynamoDB) {
+        super(dbClient, 'User');
         const params = {
             TableName: this.tableName,
             AttributeDefinitions: [
@@ -39,25 +34,10 @@ export class UserRepositoryImpl implements UserRepository {
                 WriteCapacityUnits: 5
             }
         };
-        try {
-            const command = new ListTablesCommand({});
-            const results = await this.dbClient.send(command);
-            if (results.TableNames && !results.TableNames.includes(this.tableName)) {
-                this.dbClient.createTable(params, (err: unknown, data: unknown) => {
-                    if (err) {
-                        console.error('Unable to create table. Error JSON:', JSON.stringify(err, null, 2));
-                        throw new Error('error while creating Table');
-                    } else {
-                        console.log('Created table. Table description JSON:', JSON.stringify(data, null, 2));
-                    }
-                });
-            }
-        } catch (err) {
-            console.error(err);
-        }
+        this.createTable(params);
     }
 
-    async findById(id: string) {
+    async getById(id: string) {
         // Implementation to find a user by id in DynamoDB
         const params = {
             TableName: this.tableName,
@@ -66,7 +46,12 @@ export class UserRepositoryImpl implements UserRepository {
             }
         };
         const getItemCommand = new GetItemCommand(params);
-        return this.dbClient.send(getItemCommand);
+        const output = await this.dbClient.send(getItemCommand);
+        if (output.$metadata.httpStatusCode === 200 && output.Item) {
+            const convertedItem = Base.convertItemData(output.Item) as unknown as User;
+            return convertedItem;
+        }
+        return null;
     }
 
     async createUser(user: User) {

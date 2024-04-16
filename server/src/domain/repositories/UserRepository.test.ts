@@ -15,7 +15,7 @@ class MockUserRepository implements UserRepository {
         this.users = new Map();
     }
 
-    async findById(id: string): Promise<GetItemCommandOutput | null> {
+    async getById(id: string): Promise<GetItemCommandOutput> {
         const user = this.users.get(id);
         // @ts-expect-error: for simple test data
         return user ? { Item: user } : null;
@@ -67,7 +67,7 @@ describe('MockUserRepository', () => {
         userRepository.users.set(user.id, user);
 
         // Act
-        const result = await userRepository.findById('123');
+        const result = await userRepository.getById('123');
 
         // Assert
         expect(result).toEqual({ Item: user });
@@ -75,7 +75,7 @@ describe('MockUserRepository', () => {
 
     test('findById - should return null if user not found', async () => {
         // Act
-        const result = await userRepository.findById('123');
+        const result = await userRepository.getById('123');
 
         // Assert
         expect(result).toBeNull();

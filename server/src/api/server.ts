@@ -1,11 +1,9 @@
 import express from 'express';
 import session from 'express-session';
 import CONFIG from '../config/config';
-import { HttpStatusCodes } from '../infrastructure/external/HttpStatusCodes';
-import { ErrorHandlerMiddleware } from './middlewares/errorHandler';
-import { notFoundHandler } from './middlewares/notFoundHandler';
-import postRouter from './routes/PostRouter';
-import userRouter from './routes/UserRouter';
+import { HttpStatusCodes } from '../infrastructure/external';
+import { ErrorHandlerMiddleware, notFoundHandler } from './middlewares';
+import { userRouter, postRouter, subRouter } from './routes';
 
 const app = express();
 const httpStatusCodes = new HttpStatusCodes();
@@ -27,6 +25,7 @@ app.use(session(sess));
 
 app.use('/user', userRouter);
 app.use('/post', postRouter);
+app.use('/submission', subRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler.execute.bind(errorHandler));

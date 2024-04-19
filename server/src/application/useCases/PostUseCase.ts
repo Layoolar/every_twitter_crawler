@@ -3,12 +3,24 @@ import { PostRepositoryImpl } from '../../infrastructure/data/dynamoDB/PostRepos
 import { HttpStatusCodes } from '../../infrastructure/external/HttpStatusCodes';
 import { ApplicationError } from '../errors/ApplicationError';
 
+/**
+ * This class contains all use cases related to 'Post'.
+ */
 export class PostUseCase {
+    /**
+     * @param postDBImpl A post repository implementation instance which will be used to interact with the data source.
+     * @param httpStatusCodes A HTTP status codes instance to get the HTTP status code constants.
+     */
     constructor(
         private readonly postDBImpl: PostRepositoryImpl,
         private readonly httpStatusCodes: HttpStatusCodes
     ) {}
 
+    /**
+     * Creates a new post.
+     * @param post The 'Post' object which needs to be created.
+     * @throws {ApplicationError} Throws an error if the 'Post' object doesn't contain 'id', 'url', 'actions' or 'entities'.
+     */
     async createPost(post: Post) {
         if (!post.id)
             throw new ApplicationError('post id must be provided', this.httpStatusCodes.StatusCodes.BAD_REQUEST);
@@ -25,6 +37,11 @@ export class PostUseCase {
         return this.postDBImpl.createPost(post);
     }
 
+    /**
+     * Deletes a post by its id.
+     * @param id The id of the post which needs to be deleted.
+     * @throws {ApplicationError} Throws an error if the 'id' is not provided.
+     */
     async deletePost(id: string) {
         if (!id) {
             throw new ApplicationError('id not provided', this.httpStatusCodes.StatusCodes.BAD_REQUEST);
@@ -32,6 +49,11 @@ export class PostUseCase {
         return this.postDBImpl.deletePost(id);
     }
 
+    /**
+     * Returns a post by its id.
+     * @param id The id of the post which needs to be returned.
+     * @throws {ApplicationError} Throws an error if the 'id' is not provided or the post data is not found.
+     */
     async getById(id: string) {
         if (!id) {
             throw new ApplicationError('post id not provided', this.httpStatusCodes.StatusCodes.BAD_REQUEST);
@@ -41,6 +63,9 @@ export class PostUseCase {
         throw new ApplicationError('post data not found', this.httpStatusCodes.StatusCodes.NOT_FOUND);
     }
 
+    /**
+     * Returns all posts.
+     */
     async getAllPosts() {
         return this.postDBImpl.getAllPosts();
     }

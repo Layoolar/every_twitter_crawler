@@ -1,52 +1,53 @@
 import { Request, Response } from 'express';
-import { PostUseCase } from '../../application/useCases/PostUseCase';
-import { Post } from '../../domain/entities';
+import { SubmissionUseCase } from '../../application/useCases/SubmissionUseCase';
+import { Submission } from '../../domain/entities';
 import { HttpStatusCodes } from '../../infrastructure/external/HttpStatusCodes';
 import { UUIDGenerator } from '../../infrastructure/external/UUIDGenerator';
 import { BasePresenter } from '../presenter';
 
-export class PostController {
+export class SubmissionController {
     constructor(
         private readonly presenter: BasePresenter,
         private readonly httpStatusCodes: HttpStatusCodes,
         private readonly uuidGenerator: UUIDGenerator,
-        private readonly postUseCase: PostUseCase
+        private readonly submissionUseCase: SubmissionUseCase
     ) {}
 
-    async savePost(req: Request, res: Response) {
-        const post: Post = {
+    async saveSubmission(req: Request, res: Response) {
+        const submission: Submission = {
             id: this.uuidGenerator.generateId(),
+            userId: req.body.userId,
+            postId: req.body.postId,
+            tweetId: req.body.tweetId,
             url: req.body.url,
+            type: req.body.type,
             createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            fullText: req.body.full_text ?? '',
-            entities: req.body.entities,
-            actions: req.body.actions
+            updatedAt: new Date().toISOString()
         };
-        const data = await this.postUseCase.createPost(post);
+        const data = await this.submissionUseCase.saveSubmisson(submission);
         res.status(this.httpStatusCodes.StatusCodes.CREATED).json(
             this.presenter.present(req, this.httpStatusCodes.StatusCodes.CREATED, data)
         );
     }
 
-    async getPost(req: Request, res: Response) {
+    async getSubmission(req: Request, res: Response) {
         const { id } = req.body;
-        const data = await this.postUseCase.getById(id);
+        const data = await this.submissionUseCase.getById(id);
         res.status(this.httpStatusCodes.StatusCodes.OK).json(
             this.presenter.present(req, this.httpStatusCodes.StatusCodes.OK, data)
         );
     }
 
-    async getAllPosts(req: Request, res: Response) {
-        const data = await this.postUseCase.getAllPosts();
+    async getAllSubmissions(req: Request, res: Response) {
+        const data = await this.submissionUseCase.getAllSubmissionsLast24(req.body.postId, req.body.type);
         res.status(this.httpStatusCodes.StatusCodes.OK).json(
             this.presenter.present(req, this.httpStatusCodes.StatusCodes.OK, { count: data.length, data })
         );
     }
 
-    async deletePost(req: Request, res: Response) {
+    async deleteSubmission(req: Request, res: Response) {
         const { id } = req.body;
-        await this.postUseCase.deletePost(id);
+        await this.submissionUseCase.deleteSubmission(id);
         res.status(this.httpStatusCodes.StatusCodes.OK).json(
             this.presenter.present(req, this.httpStatusCodes.StatusCodes.OK)
         );

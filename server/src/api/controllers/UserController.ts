@@ -1,14 +1,14 @@
 import { Request, Response } from 'express';
 import { HttpStatusCodes } from '../../infrastructure/external/HttpStatusCodes';
-import { UserPresenter } from '../presenter/UserPresenter';
 import { User } from '../../domain/entities';
 import { UUIDGenerator } from '../../infrastructure/external/UUIDGenerator';
 import { Permission } from '../../domain/entities/User';
 import { UserUseCase } from '../../application/useCases/UserUseCase';
+import { BasePresenter } from '../presenter';
 
 export class UserController {
     constructor(
-        private readonly userPresenter: UserPresenter,
+        private readonly presenter: BasePresenter,
         private readonly httpStatusCodes: HttpStatusCodes,
         private readonly uuidGenerator: UUIDGenerator,
         private readonly userUseCase: UserUseCase
@@ -26,9 +26,9 @@ export class UserController {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
-        await this.userUseCase.createUser(newUser);
+        const data = await this.userUseCase.saveUser(newUser);
         res.status(this.httpStatusCodes.StatusCodes.CREATED).json(
-            this.userPresenter.present(req, this.httpStatusCodes.StatusCodes.CREATED)
+            this.presenter.present(req, this.httpStatusCodes.StatusCodes.CREATED, data)
         );
     }
 
@@ -37,7 +37,7 @@ export class UserController {
         const { id } = req.body;
         const data = await this.userUseCase.getById(id);
         res.status(this.httpStatusCodes.StatusCodes.OK).json(
-            this.userPresenter.present(req, this.httpStatusCodes.StatusCodes.OK, data)
+            this.presenter.present(req, this.httpStatusCodes.StatusCodes.OK, data)
         );
     }
 
@@ -46,7 +46,7 @@ export class UserController {
         const { id } = req.body;
         await this.userUseCase.deleteUser(id);
         res.status(this.httpStatusCodes.StatusCodes.OK).json(
-            this.userPresenter.present(req, this.httpStatusCodes.StatusCodes.OK)
+            this.presenter.present(req, this.httpStatusCodes.StatusCodes.OK)
         );
     }
 }

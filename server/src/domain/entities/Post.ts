@@ -1,15 +1,15 @@
 export enum PostEntities {
     CASHTAGS = 'cashtags',
     HASHTAGS = 'hashtags',
-    KEYWORDS = 'keywords'
+    KEYWORDS = 'keywords',
+    MENTIONS = 'mentions'
 }
 
 export enum PostAction {
     RETWEET = 'retweet',
     POST = 'post',
     COMMENT = 'comment',
-    LIKE = 'like',
-    SHARE = 'share'
+    QUOTE = 'quote'
 }
 
 export interface Post {

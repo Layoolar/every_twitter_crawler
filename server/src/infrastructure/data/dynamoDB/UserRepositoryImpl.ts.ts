@@ -5,18 +5,21 @@ import {
     GetItemCommand,
     KeySchemaElement,
     PutItemCommand,
-    ScalarAttributeType
+    ScalarAttributeType,
+    UpdateItemCommand
 } from '@aws-sdk/client-dynamodb';
-import { UpdateCommandOutput } from '@aws-sdk/lib-dynamodb';
 import { User } from '../../../domain/entities';
 import { UserRepository } from '../../../domain/repositories';
-import { Base } from './Base';
+import { Base, TableParams } from './Base';
 
 export class UserRepositoryImpl extends Base implements UserRepository {
-    constructor(dbClient: DynamoDB) {
-        super(dbClient, 'User');
-        const params = {
-            TableName: this.tableName,
+    params: TableParams;
+    tableName: string;
+    constructor(dbClient: DynamoDB, tableName = 'User') {
+        super(dbClient);
+        this.tableName = tableName;
+        this.params = {
+            TableName: tableName,
             AttributeDefinitions: [
                 {
                     AttributeName: 'id',
@@ -34,7 +37,6 @@ export class UserRepositoryImpl extends Base implements UserRepository {
                 WriteCapacityUnits: 5
             }
         };
-        this.createTable(params);
     }
 
     async getById(id: string) {
@@ -73,13 +75,32 @@ export class UserRepositoryImpl extends Base implements UserRepository {
             }
         };
         const putCommand = new PutItemCommand(params);
-        return this.dbClient.send(putCommand);
+        const output = await this.dbClient.send(putCommand);
+        if (output.$metadata.httpStatusCode === 200) {
+            return user;
+        }
+        return null;
     }
 
-    async updateUser(user: User) {
+    async updateUserPoints(id: string, newPoints: number) {
         // Implementation to update a user in DynamoDB
-        console.log(user);
-        return {} as UpdateCommandOutput;
+        const params = {
+            TableName: this.tableName,
+            Key: {
+                id: { S: id }
+            },
+            UpdateExpression: 'SET accumulatedXP = accumulatedXP + :newPoints, updatedAt = :updatedAt',
+            ExpressionAttributeValues: {
+                ':newPoints': { N: String(newPoints) },
+                ':updatedAt': { S: new Date().toISOString() }
+            }
+        };
+        const updateCommand = new UpdateItemCommand(params);
+        const output = await this.dbClient.send(updateCommand);
+        if (output.$metadata.httpStatusCode === 200) {
+            return true;
+        }
+        return false;
     }
 
     async deleteUser(id: string) {
@@ -91,6 +112,8 @@ export class UserRepositoryImpl extends Base implements UserRepository {
             }
         };
         const deleteCommand = new DeleteItemCommand(params);
-        return this.dbClient.send(deleteCommand);
+        const output = await this.dbClient.send(deleteCommand);
+        if (output.$metadata.httpStatusCode === 200) return true;
+        return false;
     }
 }

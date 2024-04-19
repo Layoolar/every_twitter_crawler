@@ -1,24 +1,35 @@
 import { Router } from 'express';
-import { UserPresenter } from '../presenter/UserPresenter';
-import { UserController } from '../controllers/UserController';
-import { HttpStatusCodes } from '../../infrastructure/external/HttpStatusCodes';
-import { UUIDGenerator } from '../../infrastructure/external/UUIDGenerator';
-import dbClient from '../../infrastructure/data/DynamoDBClient';
-import { UserUseCase } from '../../application/useCases/UserUseCase';
-import { UserRepositoryImpl } from '../../infrastructure/data/dynamoDB/UserRepositoryImpl.ts';
-import asyncHandler from 'express-async-handler';
+import expressAsyncHandler from 'express-async-handler';
+import { UserUseCase } from '../../application/useCases';
+import CONFIG from '../../config/config';
+import dbClient from '../../infrastructure/data';
+import { UserRepositoryImpl } from '../../infrastructure/data/dynamoDB';
+import { HttpStatusCodes, UUIDGenerator } from '../../infrastructure/external';
+import { UserController } from '../controllers';
+import { BasePresenter } from '../presenter';
 
 const userRouter = Router();
 
+let userDBImpl = new UserRepositoryImpl(dbClient);
+if (CONFIG.ENV === 'development') {
+    userDBImpl = new UserRepositoryImpl(dbClient, 'dev_user');
+} else if (CONFIG.ENV === 'test') {
+    userDBImpl = new UserRepositoryImpl(dbClient, 'test_user');
+} else {
+    userDBImpl = new UserRepositoryImpl(dbClient);
+}
+(async () => {
+    await userDBImpl.createTable(userDBImpl.params, userDBImpl.tableName);
+})();
+
 const httpStatusCodes = new HttpStatusCodes();
 const uuidGenerator = new UUIDGenerator();
-const userPresenter = new UserPresenter(httpStatusCodes);
-const userRepositoryImpl = new UserRepositoryImpl(dbClient);
-const userUserCase = new UserUseCase(userRepositoryImpl, httpStatusCodes);
+const userPresenter = new BasePresenter(httpStatusCodes);
+const userUserCase = new UserUseCase(userDBImpl, httpStatusCodes);
 const userController = new UserController(userPresenter, httpStatusCodes, uuidGenerator, userUserCase);
 
-userRouter.get('/', asyncHandler(userController.getUser.bind(userController)));
-userRouter.post('/', asyncHandler(userController.saveUser.bind(userController)));
-userRouter.delete('/', asyncHandler(userController.deleteUser.bind(userController)));
+userRouter.get('/', expressAsyncHandler(userController.getUser.bind(userController)));
+userRouter.post('/', expressAsyncHandler(userController.saveUser.bind(userController)));
+userRouter.delete('/', expressAsyncHandler(userController.deleteUser.bind(userController)));
 
 export default userRouter;

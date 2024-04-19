@@ -1,10 +1,12 @@
 import {
     AttributeDefinition,
     CreateTableCommand,
+    DescribeTableCommand,
     DynamoDB,
     KeySchemaElement,
     ListTablesCommand
 } from '@aws-sdk/client-dynamodb';
+import { ApplicationError } from '../../../application/errors/ApplicationError';
 
 export type TableParams = {
     TableName: string;
@@ -18,21 +20,72 @@ export type TableParams = {
 
 export class Base {
     protected dbClient: DynamoDB;
-    protected tableName: string;
 
-    constructor(dbClient: DynamoDB, tableName: string) {
+    constructor(dbClient: DynamoDB) {
         this.dbClient = dbClient;
-        this.tableName = tableName;
     }
 
-    async createTable(tableParams: TableParams) {
-        const command = new ListTablesCommand({});
-        const results = await this.dbClient.send(command);
-        if (results.TableNames && !results.TableNames.includes(this.tableName)) {
-            const createTableCommand = new CreateTableCommand(tableParams);
-            const output = this.dbClient.send(createTableCommand);
-            console.log('Created table. Table description JSON:', JSON.stringify(output, null, 2));
+    async createTable(tableParams: TableParams, tableName: string) {
+        if (!tableName) {
+            throw new ApplicationError('Table name missing!', 500);
         }
+
+        const listTablesCommand = new ListTablesCommand({});
+
+        const results = await this.dbClient.send(listTablesCommand);
+        if (results.TableNames && !results.TableNames.includes(tableName)) {
+            const createTableCommand = new CreateTableCommand(tableParams);
+            const output = await this.dbClient.send(createTableCommand);
+            if (output.$metadata.httpStatusCode === 200 && output.TableDescription?.TableName === tableName) {
+                if (output.TableDescription.TableStatus === 'CREATING') {
+                    await this.waitForTableActive(tableName);
+                }
+            } else {
+                throw new ApplicationError(`Error while creating table: ${tableName}`, 500);
+            }
+        }
+    }
+
+    private async waitForTableActive(tableName: string) {
+        const pollInterval = 5000; // Polling interval in milliseconds
+        const maxAttempts = 12; // Maximum number of attempts
+        let attempts = 0;
+
+        while (attempts < maxAttempts) {
+            attempts++;
+
+            if (await this.isTableActive(tableName)) {
+                console.log(`Table "${tableName}" is active`);
+                return; // Exit the function if table is active
+            }
+
+            // Wait for the polling interval before the next attempt
+            await new Promise((resolve) => setTimeout(resolve, pollInterval));
+        }
+
+        // If maxAttempts reached and table is still not active, throw an error
+        throw new Error(`Timeout: Table "${tableName}" did not become active within the specified time`);
+    }
+
+    private async isTableActive(tableName: string) {
+        const params = {
+            TableName: tableName
+        };
+
+        try {
+            // Describe the table to get its status
+            const command = new DescribeTableCommand(params);
+            const data = await this.dbClient.send(command);
+            const status = data.Table?.TableStatus;
+            return status === 'ACTIVE';
+        } catch (error) {
+            console.error(`Error describing table: ${tableName}`, error);
+            throw error;
+        }
+    }
+
+    async deleteTable(tableName: string) {
+        return tableName;
     }
 
     /**
@@ -51,14 +104,17 @@ export class Base {
             }
 
             if (Base.isObject(value)) {
-                const child_key = Object.keys(value as Record<string, unknown>)[0];
-                if (Base.isPrimitiveDBItem(child_key)) {
-                    convertedItem[key] = (value as Record<string, unknown>)[`${child_key}`];
+                const childKey = Object.keys(value as Record<string, unknown>)[0];
+                if (Base.isPrimitiveDBItem(childKey)) {
+                    const val = (value as Record<string, unknown>)[childKey];
+                    // DynamoDB returns numbers as strings, so we need to convert them to numbers
+                    convertedItem[key] = childKey === 'N' ? parseInt(val as string) : val;
                 } else {
                     convertedItem[key] = Base.convertItemData(value as Record<string, unknown>);
                 }
             } else {
-                convertedItem[key] = value;
+                // DynamoDB returns numbers as strings, so we need to convert them to numbers
+                convertedItem[key] = key === 'N' ? parseInt(value as string) : value;
             }
         }
 

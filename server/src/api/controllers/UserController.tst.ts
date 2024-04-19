@@ -6,7 +6,7 @@ import { UUIDGenerator } from '../../infrastructure/external/UUIDGenerator';
 import { UserController } from './UserController';
 import { jest, describe, test, beforeEach, expect } from '@jest/globals';
 import { UserRepositoryImpl } from '../../infrastructure/data/dynamoDB/UserRepositoryImpl.ts';
-import dbClient from '../../infrastructure/data/DynamoDBClient';
+import dbClient from '../../infrastructure/data';
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import { ApplicationError } from '../../application/errors/ApplicationError';
 

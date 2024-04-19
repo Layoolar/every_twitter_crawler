@@ -9,21 +9,25 @@ export class UserUseCase {
         private readonly httpStatusCodes: HttpStatusCodes
     ) {}
 
-    async createUser(user: User) {
+    async saveUser(user: User) {
         if (!user.username || !user.id) {
             throw new ApplicationError('username must be provided', 400);
         }
-        await this.userDBImpl.createUser(user);
+        return this.userDBImpl.createUser(user);
     }
 
-    async deleteUser(id: string) {
+    async deleteUser(id?: string) {
         if (!id) {
             throw new ApplicationError('id not provided', this.httpStatusCodes.StatusCodes.BAD_REQUEST);
         }
-        await this.userDBImpl.deleteUser(id);
+        return this.userDBImpl.deleteUser(id);
     }
 
-    async getById(id: string) {
+    async updateUserPoints(id: string, newPoints: number) {
+        return this.userDBImpl.updateUserPoints(id, newPoints);
+    }
+
+    async getById(id?: string) {
         if (!id) {
             throw new ApplicationError('user id not provided', this.httpStatusCodes.StatusCodes.BAD_REQUEST);
         }

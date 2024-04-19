@@ -1,25 +1,36 @@
 import { Router } from 'express';
-import { PostUseCase } from '../../application/useCases/PostUseCase';
-import dbClient from '../../infrastructure/data/DynamoDBClient';
-import { PostRepositoryImpl } from '../../infrastructure/data/dynamoDB/PostRepositoryImpl';
-import { HttpStatusCodes } from '../../infrastructure/external/HttpStatusCodes';
-import { UUIDGenerator } from '../../infrastructure/external/UUIDGenerator';
-import { PostPresenter } from '../presenter/PostPresenter';
-import { PostController } from '../controllers/PostController';
-import asyncHandler from 'express-async-handler';
+import expressAsyncHandler from 'express-async-handler';
+import { PostUseCase } from '../../application/useCases';
+import CONFIG from '../../config/config';
+import dbClient from '../../infrastructure/data';
+import { PostRepositoryImpl } from '../../infrastructure/data/dynamoDB';
+import { HttpStatusCodes, UUIDGenerator } from '../../infrastructure/external';
+import { PostController } from '../controllers';
+import { BasePresenter } from '../presenter';
 
 const postRouter = Router();
 
-const postDBImpl = new PostRepositoryImpl(dbClient);
+let postDBImpl = new PostRepositoryImpl(dbClient);
+if (CONFIG.ENV === 'development') {
+    postDBImpl = new PostRepositoryImpl(dbClient, 'dev_post');
+} else if (CONFIG.ENV === 'test') {
+    postDBImpl = new PostRepositoryImpl(dbClient, 'test_post');
+} else {
+    postDBImpl = new PostRepositoryImpl(dbClient);
+}
+(async () => {
+    await postDBImpl.createTable(postDBImpl.params, postDBImpl.tableName);
+})();
+
 const uuidGenerator = new UUIDGenerator();
 const httpStatusCodes = new HttpStatusCodes();
-const postPresenter = new PostPresenter(httpStatusCodes);
+const postPresenter = new BasePresenter(httpStatusCodes);
 const postUseCase = new PostUseCase(postDBImpl, httpStatusCodes);
 const postController = new PostController(postPresenter, httpStatusCodes, uuidGenerator, postUseCase);
 
-postRouter.get('/', asyncHandler(postController.getPost.bind(postController)));
-postRouter.get('/all', asyncHandler(postController.getAllPosts.bind(postController)));
-postRouter.post('/', asyncHandler(postController.savePost.bind(postController)));
-postRouter.delete('/', asyncHandler(postController.deletePost.bind(postController)));
+postRouter.get('/', expressAsyncHandler(postController.getPost.bind(postController)));
+postRouter.get('/all', expressAsyncHandler(postController.getAllPosts.bind(postController)));
+postRouter.post('/', expressAsyncHandler(postController.savePost.bind(postController)));
+postRouter.delete('/', expressAsyncHandler(postController.deletePost.bind(postController)));
 
 export default postRouter;

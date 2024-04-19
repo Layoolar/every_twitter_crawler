@@ -1,3 +1,11 @@
 {
-	"editor.insertSpaces": true
+	"editor.insertSpaces": true,
+	"workbench.colorCustomizations": {
+		"editorLineNumber.activeForeground": "#FFFFFF",
+		"editorLineNumber.foreground": "#999999",
+		"activityBar.background": "#093422",
+		"titleBar.activeBackground": "#0D492F",
+		"titleBar.activeForeground": "#F0FCF7"
+	},
+	"CodeGPT.apiKey": "OpenAI"
 }

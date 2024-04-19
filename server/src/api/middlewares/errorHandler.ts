@@ -24,6 +24,9 @@ export class ErrorHandlerMiddleware {
         console.log(err);
         if (err instanceof ApplicationError) {
             const { message, statusCode, data } = err;
+            if (message === 'Error fetching tweets') {
+                //TODO Log error to file
+            }
             const responsePhrase = this.httpStatusCodes.getReasonPhase(statusCode);
             return res
                 .status(statusCode)

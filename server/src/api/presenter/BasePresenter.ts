@@ -2,7 +2,7 @@ import { Request } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { HttpStatusCodes } from '../../infrastructure/external/HttpStatusCodes';
 
-export class PostPresenter {
+export class BasePresenter {
     constructor(private readonly httpStatusCodes: HttpStatusCodes) {}
     present(req: Request, statusCode: StatusCodes, data: unknown = null) {
         const resBody = {

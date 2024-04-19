@@ -12,7 +12,7 @@ import {
 import { Post } from '../../../domain/entities';
 import { PostEntities } from '../../../domain/entities/Post';
 import { PostRepository } from '../../../domain/repositories';
-import { Base } from './Base';
+import { Base, TableParams } from './Base';
 
 /**
  * Represents a repository for managing posts in DynamoDB.
@@ -20,15 +20,18 @@ import { Base } from './Base';
  * @implements PostRepository
  */
 export class PostRepositoryImpl extends Base implements PostRepository {
+    params: TableParams;
+    tableName: string;
     /**
      * Creates an instance of PostRepositoryImpl.
      * @param {DynamoDB} dbClient - The DynamoDB client used for database operations.
      */
-    constructor(dbClient: DynamoDB) {
-        super(dbClient, 'Post');
+    constructor(dbClient: DynamoDB, tableName = 'Post') {
+        super(dbClient);
         // Define table parameters and create the table
-        const params = {
-            TableName: this.tableName,
+        this.tableName = tableName;
+        this.params = {
+            TableName: tableName,
             AttributeDefinitions: [
                 {
                     AttributeName: 'id',
@@ -46,7 +49,6 @@ export class PostRepositoryImpl extends Base implements PostRepository {
                 WriteCapacityUnits: 5
             }
         };
-        this.createTable(params);
     }
 
     /**
@@ -105,9 +107,10 @@ export class PostRepositoryImpl extends Base implements PostRepository {
                 fullText: { S: post.fullText },
                 entities: {
                     M: {
-                        [PostEntities.CASHTAGS]: post.entities?.cashtags ? { SS: post.entities.cashtags } : { SS: [] },
-                        [PostEntities.HASHTAGS]: post.entities?.hashtags ? { SS: post.entities.hashtags } : { SS: [] },
-                        [PostEntities.KEYWORDS]: post.entities?.keywords ? { SS: post.entities.keywords } : { SS: [] }
+                        [PostEntities.CASHTAGS]: post.entities?.cashtags ? { SS: post.entities.cashtags } : { L: [] },
+                        [PostEntities.HASHTAGS]: post.entities?.hashtags ? { SS: post.entities.hashtags } : { L: [] },
+                        [PostEntities.KEYWORDS]: post.entities?.keywords ? { SS: post.entities.keywords } : { L: [] },
+                        [PostEntities.MENTIONS]: post.entities?.keywords ? { SS: post.entities.keywords } : { L: [] }
                     }
                 },
                 actions: {

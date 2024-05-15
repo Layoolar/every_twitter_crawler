@@ -1,12 +1,15 @@
 import { NextFunction, Request, Response } from 'express';
 import { ApplicationError } from '../../application/errors/ApplicationError';
+import { NotFoundError } from '../../application/errors';
 import { HttpStatusCodes } from '../../infrastructure/external/HttpStatusCodes';
 
 export class ErrorHandlerMiddleware {
-    constructor(private readonly httpStatusCodes: HttpStatusCodes) {}
+    constructor(private readonly httpStatusCodes: HttpStatusCodes) {
+        this.httpStatusCodes = httpStatusCodes;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    execute(err: Error, req: Request, res: Response, _: NextFunction) {
+    catchAllHandler(err: Error, req: Request, res: Response, _: NextFunction) {
         const resBody = {
             body: req.body,
             query: req.query,
@@ -27,7 +30,7 @@ export class ErrorHandlerMiddleware {
             if (message === 'Error fetching tweets') {
                 //TODO Log error to file
             }
-            const responsePhrase = this.httpStatusCodes.getReasonPhase(statusCode);
+            const responsePhrase = this.httpStatusCodes.getReasonPhrase(statusCode);
             return res
                 .status(statusCode)
                 .json({ statusCode, statusMessage: responsePhrase, request: resBody, error: { message, data } });
@@ -35,12 +38,17 @@ export class ErrorHandlerMiddleware {
 
         // TODO log error here
         const responseCode = this.httpStatusCodes.StatusCodes.INTERNAL_SERVER_ERROR;
-        const responsePhrase = this.httpStatusCodes.getReasonPhase(responseCode);
+        const responsePhrase = this.httpStatusCodes.getReasonPhrase(responseCode);
         return res.status(responseCode).json({
             status: responseCode,
             statusMessage: responsePhrase,
             request: resBody,
             error: { message: responsePhrase }
         });
+    }
+
+    notFoundHandler(req: Request, res: Response, next: NextFunction) {
+        const error = new NotFoundError(`Path '${req.originalUrl}' not found`);
+        next(error);
     }
 }

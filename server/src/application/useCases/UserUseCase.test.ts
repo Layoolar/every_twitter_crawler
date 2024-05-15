@@ -1,18 +1,17 @@
 import { DeleteTableCommand } from '@aws-sdk/client-dynamodb';
 import dbClient from '../../infrastructure/data';
-import { UserRepositoryImpl } from '../../infrastructure/data/dynamoDB/UserRepositoryImpl.ts';
-import { HttpStatusCodes } from '../../infrastructure/external/HttpStatusCodes';
 import { UUIDGenerator } from '../../infrastructure/external/UUIDGenerator';
 import { UserUseCase } from './UserUseCase';
 import { User } from '../../domain/entities';
 import { faker } from '@faker-js/faker';
 import { Permission } from '../../domain/entities/User';
 import { ApplicationError } from '../errors/ApplicationError';
+import { httpStatusCodes } from '../../infrastructure/external';
+import { UserRepositoryImpl } from '../../infrastructure/data/dynamoDB/UserRepositoryImpl';
 
 describe('UserUserCase', () => {
     const tableName = 'jest_user';
     const uuidGenerator = new UUIDGenerator();
-    const httpStatusCodes = new HttpStatusCodes();
     const userDBImpl = new UserRepositoryImpl(dbClient, tableName);
     userDBImpl.deleteTable = async (tableName: string) => {
         try {
@@ -32,14 +31,13 @@ describe('UserUserCase', () => {
         const postId = uuidGenerator.generateId();
         return {
             id: postId,
-            accumulatedXP: faker.number.int(),
             email: faker.internet.email(),
-            location: faker.location.country(),
             permission: Permission.USER,
-            username: faker.person.firstName(),
-            accessToken: faker.string.uuid(),
-            expiresIn: faker.number.int(),
-            refreshToken: faker.string.uuid(),
+            xp: {
+                totalxp: 0,
+                claimed: 0,
+                unclaimed: 0
+            },
             createdAt: faker.date.anytime().toISOString(),
             updatedAt: faker.date.anytime().toISOString()
         };
@@ -67,6 +65,8 @@ describe('UserUserCase', () => {
 
     test('getById should get existing user', async () => {
         const newUser = mockNewUser();
+        newUser.twitter = null;
+        newUser.telegram = null;
         await userUseCase.saveUser(newUser);
         const user = await userUseCase.getById(newUser.id);
         expect(user).toBeDefined();
@@ -96,7 +96,8 @@ describe('UserUserCase', () => {
 
     test('updateUserPoints should correctly update users points', async () => {
         const newUser = mockNewUser();
-        newUser.accumulatedXP = 12;
+        newUser.xp.totalxp = 12;
+        newUser.xp.unclaimed = 12;
         await userUseCase.saveUser(newUser);
         const user = await userUseCase.getById(newUser.id);
         expect(user).toBeDefined();
@@ -108,6 +109,7 @@ describe('UserUserCase', () => {
         expect(getUpdatedUser).toBeDefined();
         expect(getUpdatedUser?.id).toBeDefined();
         expect(getUpdatedUser?.id).toBe(newUser.id);
-        expect(getUpdatedUser?.accumulatedXP).toEqual(17);
+        expect(getUpdatedUser.xp.totalxp).toEqual(17);
+        expect(getUpdatedUser.xp.unclaimed).toEqual(17);
     });
 });

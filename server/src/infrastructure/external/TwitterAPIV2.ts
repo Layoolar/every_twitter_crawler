@@ -3,6 +3,8 @@ import { Submission } from '../../domain/entities';
 import { chunkifyArray, wait } from '../../utils';
 import { SubmissionType } from '../../domain/entities/Submission';
 import { ApplicationError } from '../../application/errors';
+import CONFIG from '../../config/config';
+import axios from 'axios';
 
 type MyClassProps = {
     fetchSize?: number;
@@ -22,9 +24,16 @@ export type TweetFetchObject = Submission & {
     };
 };
 
-export type FetchObject = (TweetFetchObject | null)[];
+type FetchObject = (TweetFetchObject | null)[];
 
-export type CollectionObject = { success: FetchObject; failed: Submission[] };
+type CollectionObject = { success: FetchObject; failed: Submission[] };
+
+export const spawnNewClient = () => {
+    return new TwitterApi({
+        clientId: CONFIG.TWITTER_TOKENS.TWITTER_CLIENT_ID,
+        clientSecret: CONFIG.TWITTER_TOKENS.TWITTER_CLIENT_SECRET
+    });
+};
 
 /**
  * Represents a class for interacting with the Twitter API v2.
@@ -39,12 +48,53 @@ export class TwitterAPIV2 {
      */
     constructor({ fetchSize = 99 }: Partial<MyClassProps> = {}) {
         this.fetchSize = fetchSize;
-        this.client = new TwitterApi({
-            appKey: '',
-            appSecret: '',
-            accessToken: '',
-            accessSecret: ''
+        this.client = spawnNewClient();
+    }
+
+    generateAuthLink(callback_url: string) {
+        return this.client.generateOAuth2AuthLink(callback_url, {
+            scope: ['tweet.read', 'users.read', 'offline.access']
         });
+    }
+
+    async getTokenAndData(code: string, codeVerifier: string, callback_url: string) {
+        const concatAuth = `${CONFIG.TWITTER_TOKENS.TWITTER_CLIENT_ID}:${CONFIG.TWITTER_TOKENS.TWITTER_CLIENT_SECRET}`;
+        const options = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                Authorization: `Basic ${Buffer.from(concatAuth).toString('base64')}`
+            },
+            data: new URLSearchParams({
+                code,
+                grant_type: 'authorization_code',
+                redirect_uri: callback_url,
+                code_verifier: codeVerifier,
+                client_id: CONFIG.TWITTER_TOKENS.TWITTER_CLIENT_ID
+            }),
+            url: 'https://api.twitter.com/2/oauth2/token'
+        };
+
+        try {
+            const res = await axios(options);
+            const data = await res.data;
+            if (res.status === 200) {
+                const client = new TwitterApi(data.access_token);
+                const { data: userObject } = await client.v2.me({
+                    'user.fields': ['profile_image_url', 'url', 'location']
+                });
+                console.log({ auth: data, user: userObject });
+                return { auth: data, user: userObject };
+            }
+        } catch (error) {
+            // TODO axios logs error here, look into this later
+            // console.log(error);
+        }
+        return null;
+    }
+
+    isValidAccessToken() {
+        return false;
     }
 
     /**

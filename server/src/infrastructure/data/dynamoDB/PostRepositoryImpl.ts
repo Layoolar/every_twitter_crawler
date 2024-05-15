@@ -103,14 +103,18 @@ export class PostRepositoryImpl extends Base implements PostRepository {
             TableName: this.tableName,
             Item: {
                 id: { S: post.id },
+                admin_id: { S: post.admin_id },
+                description: { S: post.description },
+                title: { S: post.title },
                 url: { S: post.url },
-                fullText: { S: post.fullText },
+                fullText: { S: post.text },
+                endTime: { S: post.endTime },
                 entities: {
                     M: {
                         [PostEntities.CASHTAGS]: post.entities?.cashtags ? { SS: post.entities.cashtags } : { L: [] },
                         [PostEntities.HASHTAGS]: post.entities?.hashtags ? { SS: post.entities.hashtags } : { L: [] },
                         [PostEntities.KEYWORDS]: post.entities?.keywords ? { SS: post.entities.keywords } : { L: [] },
-                        [PostEntities.MENTIONS]: post.entities?.keywords ? { SS: post.entities.keywords } : { L: [] }
+                        [PostEntities.MENTIONS]: post.entities?.mentions ? { SS: post.entities.mentions } : { L: [] }
                     }
                 },
                 actions: {

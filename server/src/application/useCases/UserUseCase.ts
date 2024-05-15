@@ -1,5 +1,5 @@
 import { User } from '../../domain/entities';
-import { UserRepositoryImpl } from '../../infrastructure/data/dynamoDB/UserRepositoryImpl.ts';
+import { UserRepositoryImpl } from '../../infrastructure/data/dynamoDB/UserRepositoryImpl';
 import { HttpStatusCodes } from '../../infrastructure/external/HttpStatusCodes';
 import { ApplicationError } from '../errors/ApplicationError';
 
@@ -10,9 +10,6 @@ export class UserUseCase {
     ) {}
 
     async saveUser(user: User) {
-        if (!user.username || !user.id) {
-            throw new ApplicationError('username must be provided', 400);
-        }
         return this.userDBImpl.createUser(user);
     }
 

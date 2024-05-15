@@ -40,10 +40,12 @@ describe('PostUseCase', () => {
         const postId = uuidGenerator.generateId();
         return {
             id: postId,
+            title: faker.lorem.word({ length: { min: 8, max: 15 }, strategy: 'closest' }),
             url: faker.internet.url(),
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            fullText: '',
+            endTime: new Date().toISOString(),
+            text: '',
             entities: {
                 cashtags: [
                     `${faker.finance.currency().symbol}${faker.finance.currency().code}`,

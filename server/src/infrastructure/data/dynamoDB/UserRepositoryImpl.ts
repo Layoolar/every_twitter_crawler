@@ -62,16 +62,37 @@ export class UserRepositoryImpl extends Base implements UserRepository {
             TableName: this.tableName,
             Item: {
                 id: { S: user.id },
-                username: { S: user.username },
+                email: user.email ? { S: user.email } : { NULL: true },
                 permission: { S: user.permission },
-                accumulatedXP: { N: user.accumulatedXP.toString() },
-                email: { S: user.email },
-                location: { S: user.location },
+                xp: {
+                    M: {
+                        totalxp: { N: user.xp.totalxp.toString() },
+                        claimed: { N: user.xp.claimed.toString() },
+                        unclaimed: { N: user.xp.unclaimed.toString() }
+                    }
+                },
+                twitter: user.twitter
+                    ? {
+                          M: {
+                              id: { S: user.twitter.id },
+                              username: { S: user.twitter.username },
+                              profile_image_url: { S: user.twitter.profile_image_url }
+                          }
+                      }
+                    : { NULL: true },
+                telegram: user.telegram
+                    ? {
+                          M: {
+                              id: { N: user.telegram.id.toString() },
+                              is_bot: { BOOL: user.telegram.is_bot },
+                              first_name: { S: user.telegram.first_name },
+                              username: { S: user.telegram.username },
+                              language_code: { S: user.telegram.language_code }
+                          }
+                      }
+                    : { NULL: true },
                 createdAt: { S: user.createdAt },
-                updatedAt: { S: user.updatedAt },
-                accessToken: { S: user.accessToken ?? '' },
-                refreshToken: { S: user.refreshToken ?? '' },
-                expiresIn: { N: user.expiresIn?.toString() ?? '0' }
+                updatedAt: { S: user.updatedAt }
             }
         };
         const putCommand = new PutItemCommand(params);
@@ -82,25 +103,48 @@ export class UserRepositoryImpl extends Base implements UserRepository {
         return null;
     }
 
-    async updateUserPoints(id: string, newPoints: number) {
-        // Implementation to update a user in DynamoDB
+    async updateUserDataFromTwitter(user: User) {
+        const params = {
+            TableName: this.tableName,
+            Key: {
+                id: { S: user.id }
+            },
+            UpdateExpression:
+                'SET #attr.#key.#id = :id, #attr.#key.#username = :username, #attr.#key.#profile_image_url = :profile_image_url',
+            ExpressionAttributeNames: {
+                '#attr': 'twitter',
+                '#key': 'M',
+                '#auth_attr': 'authData',
+                '#id': 'id',
+                '#username': 'username',
+                '#profile_image_url': 'profile_image_url'
+            },
+            ExpressionAttributeValues: {
+                ':id': user.twitter ? { S: user.twitter.id } : { NULL: true },
+                ':username': user.twitter ? { S: user.twitter.username } : { NULL: true },
+                ':profile_image_url': user.twitter ? { S: user.twitter.profile_image_url } : { NULL: true }
+            }
+        };
+
+        const updateCommand = new UpdateItemCommand(params);
+        const output = await this.dbClient.send(updateCommand);
+        return output.$metadata.httpStatusCode === 200;
+    }
+
+    async updateUserPoints(id: string, newPoints: number): Promise<boolean> {
         const params = {
             TableName: this.tableName,
             Key: {
                 id: { S: id }
             },
-            UpdateExpression: 'SET accumulatedXP = accumulatedXP + :newPoints, updatedAt = :updatedAt',
+            UpdateExpression: 'SET xp.totalxp = xp.totalxp + :newPoints, xp.unclaimed = xp.unclaimed + :newPoints',
             ExpressionAttributeValues: {
-                ':newPoints': { N: String(newPoints) },
-                ':updatedAt': { S: new Date().toISOString() }
+                ':newPoints': { N: newPoints.toString() }
             }
         };
         const updateCommand = new UpdateItemCommand(params);
         const output = await this.dbClient.send(updateCommand);
-        if (output.$metadata.httpStatusCode === 200) {
-            return true;
-        }
-        return false;
+        return output.$metadata.httpStatusCode === 200;
     }
 
     async deleteUser(id: string) {
@@ -113,7 +157,6 @@ export class UserRepositoryImpl extends Base implements UserRepository {
         };
         const deleteCommand = new DeleteItemCommand(params);
         const output = await this.dbClient.send(deleteCommand);
-        if (output.$metadata.httpStatusCode === 200) return true;
-        return false;
+        return output.$metadata.httpStatusCode === 200;
     }
 }

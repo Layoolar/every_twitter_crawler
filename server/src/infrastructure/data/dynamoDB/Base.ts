@@ -108,13 +108,13 @@ export class Base {
                 if (Base.isPrimitiveDBItem(childKey)) {
                     const val = (value as Record<string, unknown>)[childKey];
                     // DynamoDB returns numbers as strings, so we need to convert them to numbers
-                    convertedItem[key] = childKey === 'N' ? parseInt(val as string) : val;
+                    convertedItem[key] = childKey === 'N' ? parseInt(val as string) : childKey === 'NULL' ? null : val;
                 } else {
                     convertedItem[key] = Base.convertItemData(value as Record<string, unknown>);
                 }
             } else {
                 // DynamoDB returns numbers as strings, so we need to convert them to numbers
-                convertedItem[key] = key === 'N' ? parseInt(value as string) : value;
+                convertedItem[key] = key === 'N' ? parseInt(value as string) : key === 'NULL' ? null : value;
             }
         }
 

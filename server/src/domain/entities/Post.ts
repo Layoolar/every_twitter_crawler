@@ -13,11 +13,15 @@ export enum PostAction {
 }
 
 export interface Post {
+    title: string;
     id: string;
+    admin_id: string;
+    description: string;
     url: string;
     createdAt: string;
     updatedAt: string;
-    fullText: string;
+    text: string;
+    endTime: string;
     entities: Partial<{
         [entity in PostEntities]: string[];
     }>;

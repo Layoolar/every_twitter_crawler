@@ -16,10 +16,14 @@ export class PostController {
     async savePost(req: Request, res: Response) {
         const post: Post = {
             id: this.uuidGenerator.generateId(),
+            admin_id: req.body.admin_id,
             url: req.body.url,
+            title: req.body.title,
+            description: req.body.description,
+            endTime: req.body.endTime,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            fullText: req.body.full_text ?? '',
+            text: req.body.full_text ?? '',
             entities: req.body.entities,
             actions: req.body.actions
         };

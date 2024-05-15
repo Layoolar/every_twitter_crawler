@@ -3,7 +3,7 @@ import { AnalyseTweet } from '../../utils/CalculatePoints';
 import { ApplicationError } from '../errors';
 import { PostUseCase, SubmissionUseCase, UserUseCase } from '../useCases';
 
-class FetchAndAwardPointsInteractor {
+export class FetchAndAwardPointsInteractor {
     constructor(
         private postUseCase: PostUseCase,
         private submissionUseCase: SubmissionUseCase,
@@ -26,6 +26,8 @@ class FetchAndAwardPointsInteractor {
         const tweets = await this.fetchTweets.start(submissions);
         if (!tweets) return;
         const { success, failed } = tweets;
+        // TODO Remove later
+        console.log(failed);
         for (const tweet of success) {
             if (tweet) {
                 const points = tweet ? pt.calculate(tweet) : 0;

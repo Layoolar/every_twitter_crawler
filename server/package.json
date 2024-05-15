@@ -9,7 +9,8 @@
         "lint:fix": "eslint src --fix",
         "format": "prettier --write \"src/**/*.+(js|jsx|json|css|scss|ts|tsx)\"",
         "dev": "nodemon --exec ts-node --compiler typescript src/main.ts",
-        "test": "jest"
+        "test": "jest",
+        "popdb": "ts-node --compiler typescript src/populatedb/populateDB"
     },
     "keywords": [],
     "author": "",
@@ -17,18 +18,26 @@
     "dependencies": {
         "@aws-sdk/client-dynamodb": "^3.549.0",
         "@aws-sdk/lib-dynamodb": "^3.549.0",
+        "axios": "^1.6.8",
+        "connect-dynamodb": "^3.0.3",
+        "cookie-parser": "^1.4.6",
+        "cors": "^2.8.5",
         "dotenv": "^16.4.5",
         "express": "^4.19.2",
         "express-async-handler": "^1.2.0",
         "express-session": "^1.18.0",
         "http-status-codes": "^2.3.0",
+        "jsonwebtoken": "^9.0.2",
         "twitter-api-v2": "^1.16.1"
     },
     "devDependencies": {
         "@faker-js/faker": "^8.4.1",
+        "@types/cookie-parser": "^1.4.7",
+        "@types/cors": "^2.8.17",
         "@types/express": "^4.17.21",
         "@types/express-session": "^1.18.0",
         "@types/jest": "^29.5.12",
+        "@types/jsonwebtoken": "^9.0.6",
         "@types/node": "^20.12.4",
         "@typescript-eslint/eslint-plugin": "^7.6.0",
         "@typescript-eslint/parser": "^7.6.0",

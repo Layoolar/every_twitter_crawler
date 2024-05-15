@@ -41,7 +41,7 @@ describe('UserController', () => {
                 };
                 return {
                     statusCode,
-                    statusMessage: this.codes.getReasonPhase(statusCode),
+                    statusMessage: this.codes.getReasonPhrase(statusCode),
                     request: resBody,
                     data
                 };

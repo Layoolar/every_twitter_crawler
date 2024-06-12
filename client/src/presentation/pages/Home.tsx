@@ -18,6 +18,16 @@ const Home = () => {
 
 	return (
 		<div className='pb-8 flex flex-col divide-y divide-text-700'>
+			<div className='w-full flex divide-x divide-text-700'>
+				<div className='h-20 w-20 bg-accent'></div>
+				<div className='h-20 w-20 bg-secondary'></div>
+				<div className='h-20 w-20 bg-text'></div>
+				<div className='h-20 w-20 bg-primary'></div>
+				<div className='h-20 w-20 bg-background'></div>
+				<div className='h-20 w-20 bg-accent'></div>
+				<div className='h-20 w-20 bg-accent'></div>
+				<div className='h-20 w-20 bg-accent'></div>
+			</div>
 			{posts?.length ? (
 				posts?.map((post, idx) => {
 					return <TaskCard key={`card-${idx}`} post={post} />;

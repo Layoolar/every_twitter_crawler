@@ -4,6 +4,7 @@ import { ApplicationError } from '../../application/errors';
 import CONFIG from '../../config/config';
 import { UserRepositoryImpl } from '../../infrastructure/data/dynamoDB/UserRepositoryImpl';
 import jwt from 'jsonwebtoken';
+import { Permission } from '../../domain/entities/User';
 
 export class Middleware {
     constructor(private readonly userDBImpl: UserRepositoryImpl) {}
@@ -34,6 +35,13 @@ export class Middleware {
         const unauthorized = StatusCodes.UNAUTHORIZED;
         const user = res.locals.user;
         if (!user) throw new ApplicationError('Invalid token or session has expired', unauthorized);
+        next();
+    }
+
+    async requireAdmin(req: Request, res: Response, next: NextFunction) {
+        const forbidden = StatusCodes.FORBIDDEN;
+        const user = await this.userDBImpl.getById(res.locals.user);
+        if (user?.permission !== Permission.ADMIN) throw new ApplicationError('Forbidden!', forbidden);
         next();
     }
 }

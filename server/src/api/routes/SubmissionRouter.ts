@@ -17,7 +17,11 @@ subRouter.use(
     expressAsyncHandler(authMiddlewares.isAuthenticated.bind(authMiddlewares)),
     expressAsyncHandler(authMiddlewares.requireUser)
 );
-subRouter.get('/', expressAsyncHandler(subController.getAllSubmissions.bind(subController)));
+subRouter.get(
+    '/',
+    expressAsyncHandler(authMiddlewares.requireAdmin),
+    expressAsyncHandler(subController.getAllSubmissions.bind(subController))
+);
 subRouter.post('/', expressAsyncHandler(subController.saveSubmission.bind(subController)));
 subRouter.delete('/', expressAsyncHandler(subController.deleteSubmission.bind(subController)));
 

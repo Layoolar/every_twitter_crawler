@@ -18,7 +18,15 @@ postRouter.use(
 );
 postRouter.get('/', expressAsyncHandler(postController.getPost.bind(postController)));
 postRouter.get('/all', expressAsyncHandler(postController.getAllPosts.bind(postController)));
-postRouter.post('/', expressAsyncHandler(postController.savePost.bind(postController)));
-postRouter.delete('/', expressAsyncHandler(postController.deletePost.bind(postController)));
+postRouter.post(
+    '/',
+    expressAsyncHandler(authMiddlewares.requireAdmin),
+    expressAsyncHandler(postController.savePost.bind(postController))
+);
+postRouter.delete(
+    '/',
+    expressAsyncHandler(authMiddlewares.requireAdmin),
+    expressAsyncHandler(postController.deletePost.bind(postController))
+);
 
 export default postRouter;

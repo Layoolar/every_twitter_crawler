@@ -15,6 +15,7 @@ export class AnalyseTweet {
         const htSet = new Set(ht);
         const htPoints = hashtags?.filter((_ht) => htSet.has(_ht.toLowerCase())).length;
         points += htPoints ?? 0;
+        // TODO htPoints * post.submissiontype gives the points for the submission type
 
         // Cashtags
         const ct = tweet.entities.ct?.map((ct) => ct.toLowerCase());
